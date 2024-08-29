@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 
 import { cn } from "../lib/utils";
 
@@ -21,14 +22,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={cn(
-          "min-h-screen bg-gradient-to-b from-inherit to-black font-sans antialiased"
-        )}
-      >
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={cn(
+            "min-h-screen bg-gradient-to-b from-inherit to-black font-sans antialiased"
+          )}
+        >
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

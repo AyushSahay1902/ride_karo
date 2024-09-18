@@ -1,22 +1,36 @@
 "use client";
 import React, { useState } from "react";
-import { MapPin, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import RideComparisonForm from "@/components/RideComparisonForm";
+
+const SignOutButton = () => {
+  const router = useRouter();
+  const { signOut } = useClerk();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/"); // Redirect to home page after sign out
+  };
+
+  return (
+    <button
+      className="px-4 py-2 bg-white text-lime-600 font-semibold rounded-full hover:bg-lime-100 transition duration-300 ease-in-out flex items-center"
+      onClick={handleSignOut}
+    >
+      <LogOut size={18} className="mr-2" />
+      Sign Out
+    </button>
+  );
+};
 
 const Home = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-lime-50 to-blue-50">
       <header className="flex justify-between items-center bg-lime-400 p-3 shadow-md">
         <h1 className="text-3xl font-bold text-white">Welcome, Rider!</h1>
-        <button
-          className="px-4 py-2 bg-white text-lime-600 font-semibold rounded-full hover:bg-lime-100 transition duration-300 ease-in-out flex items-center"
-          onClick={() => {
-            window.location.href = "/sign-up";
-          }}
-        >
-          <LogOut size={18} className="mr-2" />
-          Sign Out
-        </button>
+        <SignOutButton />
       </header>
 
       <main className="flex-grow flex flex-col items-center p-5">

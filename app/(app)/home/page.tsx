@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
-import RideComparisonForm from "@/components/RideComparisonForm";
+import { useClerk, UserButton } from "@clerk/nextjs";
+import RideComparisonForm from "@/components/Booking/RideComparisonForm";
 
 const SignOutButton = () => {
   const router = useRouter();
@@ -30,7 +30,8 @@ const Home = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-lime-50 to-blue-50">
       <header className="flex justify-between items-center bg-lime-400 p-3 shadow-md">
         <h1 className="text-3xl font-bold text-white">Welcome, Rider!</h1>
-        <SignOutButton />
+        <UserButton afterSignOutUrl="/" />
+        {/* <SignOutButton /> */}
       </header>
 
       <main className="flex-grow flex flex-col items-center p-5">
@@ -50,6 +51,7 @@ const Home = () => {
           </p>
         </div>
         <RideComparisonForm />
+        <div></div>
       </main>
     </div>
   );

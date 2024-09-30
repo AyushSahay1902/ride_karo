@@ -1,11 +1,17 @@
 import React, { useState } from "react";
 import { MapPin } from "lucide-react";
 
+import Cars from "./Cars";
+
 const RideComparisonForm = () => {
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeInput, setActiveInput] = useState("");
+
+  const sessionToken = "";
+  const MAPBOX_RETRIVE_URL =
+    "https://api.mapbox.com/search/searchbox/v1/suggest?q={search_text}";
 
   const [addressList, setAddressList] = useState<{
     suggestions: string[];
@@ -57,6 +63,11 @@ const RideComparisonForm = () => {
     setAddressList({ suggestions: [], length: 0 });
   };
 
+  const onSourceChange = (e: any) => {
+    setStartLocation(e.target.value);
+    getAddressSuggestions(e.target.value, "start");
+  };
+
   return (
     <div className="w-full max-w-5xl bg-gradient-to-r from-lime-100 to-blue-100 rounded-2xl shadow-xl p-6">
       <form onSubmit={handleSubmit} className="flex items-center space-x-4">
@@ -68,8 +79,7 @@ const RideComparisonForm = () => {
               id="start-location"
               value={startLocation}
               onChange={(e) => {
-                setStartLocation(e.target.value);
-                getAddressSuggestions(e.target.value, "start");
+                onSourceChange(e);
               }}
               required
               placeholder="Enter pickup location"
@@ -130,6 +140,11 @@ const RideComparisonForm = () => {
           {isLoading ? "Comparing..." : "Compare Prices"}
         </button>
       </form>
+      <div className="flex justify-center mt-6">
+        <div className=" rounded-lg shadow-lg p-4 w-full">
+          <Cars />
+        </div>
+      </div>
     </div>
   );
 };

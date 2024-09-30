@@ -14,7 +14,7 @@ const ModeofTransport = [
   {
     id: 3,
     mode: "Mini",
-    image: "/images/mini.png",
+    image: "/images/mini-car.png",
     price: 12,
   },
   {

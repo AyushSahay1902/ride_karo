@@ -1,17 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { MapPin } from "lucide-react";
-
+import cities from "@/data/cities";
 import Cars from "./Cars";
+import { UserLoactionCont } from "@/context/UserLocationCont";
+import MapBox from "../Map/MapBox";
 
 const RideComparisonForm = () => {
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeInput, setActiveInput] = useState("");
+  const [routeGeoJSON, setRouteGeoJSON] = useState(null);
 
-  const sessionToken = "";
-  const MAPBOX_RETRIVE_URL =
-    "https://api.mapbox.com/search/searchbox/v1/suggest?q={search_text}";
+  const { userLocation } = useContext(UserLoactionCont);
+
+  const MAPBOX_DIRECTIONS_URL =
+    "https://api.mapbox.com/directions/v5/mapbox/driving/";
 
   const [addressList, setAddressList] = useState<{
     suggestions: string[];
@@ -21,40 +25,53 @@ const RideComparisonForm = () => {
     length: 0,
   });
 
-  const getAddressSuggestions = async (
-    query: string,
-    inputType: React.SetStateAction<string>
-  ) => {
+  const getAddressSuggestions = async (query: string, inputType: string) => {
     if (!query) {
       setAddressList({ suggestions: [], length: 0 });
       return;
     }
-    // Simulate API call with dummy data
-    const dummySuggestions = [
-      `${query} Street`,
-      `${query} Avenue`,
-      `${query} Boulevard`,
-    ];
+
     setAddressList({
-      suggestions: dummySuggestions,
-      length: dummySuggestions.length,
+      suggestions: cities.filter((city) =>
+        city.toLowerCase().includes(query.toLowerCase())
+      ),
+      length: cities.length,
     });
     setActiveInput(inputType);
+  };
+
+  const fetchRoute = async (
+    startCoords: [number, number],
+    endCoords: [number, number]
+  ) => {
+    const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    const directionsUrl = `${MAPBOX_DIRECTIONS_URL}${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?geometries=geojson&access_token=${accessToken}`;
+
+    const response = await fetch(directionsUrl);
+    const data = await response.json();
+
+    if (data.routes.length) {
+      setRouteGeoJSON(data.routes[0].geometry);
+    }
   };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Comparing prices for:", { startLocation, endLocation });
+
+    // Simulated start and end coordinates (replace with actual location data)
+    const startCoords: [number, number] = [
+      userLocation.longitude,
+      userLocation.latitude,
+    ];
+    const endCoords: [number, number] = [72.8777, 19.076]; // Replace this with dynamic coordinates for the end location
+
+    await fetchRoute(startCoords, endCoords);
+
     setIsLoading(false);
   };
 
-  const handleSelectAddress = (
-    address: React.SetStateAction<string>,
-    inputType: string
-  ) => {
+  const handleSelectAddress = (address: string, inputType: string) => {
     if (inputType === "start") {
       setStartLocation(address);
     } else {
@@ -78,9 +95,7 @@ const RideComparisonForm = () => {
               type="text"
               id="start-location"
               value={startLocation}
-              onChange={(e) => {
-                onSourceChange(e);
-              }}
+              onChange={(e) => onSourceChange(e)}
               required
               placeholder="Enter pickup location"
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 bg-white"
@@ -100,6 +115,7 @@ const RideComparisonForm = () => {
             </ul>
           )}
         </div>
+
         <div className="flex-grow relative">
           <div className="relative">
             <MapPin className="absolute top-3 left-3 text-gray-400" size={20} />
@@ -130,6 +146,7 @@ const RideComparisonForm = () => {
             </ul>
           )}
         </div>
+
         <button
           type="submit"
           disabled={isLoading}
@@ -140,8 +157,16 @@ const RideComparisonForm = () => {
           {isLoading ? "Comparing..." : "Compare Prices"}
         </button>
       </form>
+
+      {/* <div className="mt-6">
+        <MapBox
+          routeGeoJSON={routeGeoJSON}
+          endLocationCoords={[72.8777, 19.076]}
+        />
+      </div> */}
+
       <div className="flex justify-center mt-6">
-        <div className=" rounded-lg shadow-lg p-4 w-full">
+        <div className="rounded-lg shadow-lg p-4 w-full">
           <Cars />
         </div>
       </div>

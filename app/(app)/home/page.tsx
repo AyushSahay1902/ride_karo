@@ -6,7 +6,9 @@ import { useClerk, UserButton } from "@clerk/nextjs";
 import RideComparisonForm from "@/components/Booking/RideComparisonForm";
 import MapBox from "@/components/Map/MapBox";
 import { UserLoactionCont } from "@/context/UserLocationCont";
+import { LocationProvider } from "@/app/context/LocationContext";
 
+// Sign Out button component
 const SignOutButton = () => {
   const router = useRouter();
   const { signOut } = useClerk();
@@ -27,26 +29,41 @@ const SignOutButton = () => {
   );
 };
 
+// Define the shape of userLocation to avoid using "any"
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
 const Home = () => {
-  const [userLocation, setUserLocation] = useState<any>();
+  const [userLocation, setUserLocation] = useState<Location | null>(null); // Initialize with null
+
   useEffect(() => {
     getUserLocation();
   }, []);
-  const getUserLocation = async () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      setUserLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-    });
+
+  const getUserLocation = () => {
+    // Get user's geolocation
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.error("Error getting user location:", error);
+      }
+    );
   };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-lime-50 to-blue-50">
       <header className="flex justify-between items-center bg-lime-400 p-3 shadow-md">
         <h1 className="text-3xl font-bold text-white">Welcome, Rider!</h1>
-        <UserButton afterSignOutUrl="/" />
-        {/* <SignOutButton /> */}
+        <UserButton />
       </header>
+
       <UserLoactionCont.Provider value={{ userLocation, setUserLocation }}>
         <main className="flex-grow flex flex-col items-center p-5">
           <div className="text-center mb-10">
@@ -64,12 +81,19 @@ const Home = () => {
               ride, every city, every time!
             </p>
           </div>
-          <RideComparisonForm />
-          <div className="mt-5 w-full max-w-5xl h-[500px] justify-center items-center bg-green-100 rounded-lg overflow-hidden">
-            {" "}
-            {/* Adjusted width and height */}
-            <MapBox />
-          </div>
+          <LocationProvider>
+            {/* Ride Comparison Form */}
+            <RideComparisonForm />
+
+            <div className="mt-5 w-full max-w-5xl h-[500px] justify-center items-center bg-green-100 rounded-lg overflow-hidden">
+              {/* Only render MapBox when userLocation is available */}
+              {userLocation ? (
+                <MapBox location={userLocation} />
+              ) : (
+                <p>Loading map...</p>
+              )}
+            </div>
+          </LocationProvider>
         </main>
       </UserLoactionCont.Provider>
     </div>

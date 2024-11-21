@@ -96,6 +96,51 @@ const Home = () => {
           </LocationProvider>
         </main>
       </UserLoactionCont.Provider>
+
+      <div id="footer" className="bg-lime-50 py-8">
+        <div className="flex flex-col items-center space-y-4 mb-4">
+          <ul className="flex space-x-6">
+            <li>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-lime-600 transition"
+              >
+                Google
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-lime-600 transition"
+              >
+                Facebook
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-lime-600 transition"
+              >
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a
+                href="#"
+                className="text-gray-600 hover:text-lime-600 transition"
+              >
+                X
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <footer className="bg-lime-400 p-3 text-center text-white">
+          <p>
+            &copy; {new Date().getFullYear()} Ride Karo. All rights reserved.
+          </p>
+        </footer>
+      </div>
     </div>
   );
 };

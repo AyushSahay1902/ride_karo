@@ -1,7 +1,9 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { MapPin } from "lucide-react";
 import { SearchBox } from "@mapbox/search-js-react";
 import { useLocation } from "@/app/context/LocationContext";
+import RideComparisonResults from "./RideComparisonResults";
 
 interface LocationState {
   address: string;
@@ -22,6 +24,7 @@ const RideComparisonForm = () => {
   const [currentVehicle, setCurrentVehicle] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]); // Array of rider results
 
   const vehicles = [
     { name: "Bike", price: "From ₹50" },
@@ -29,6 +32,7 @@ const RideComparisonForm = () => {
     { name: "Car Mini", price: "From ₹120" },
     { name: "Sedan", price: "From ₹150" },
     { name: "Prime", price: "From ₹200" },
+    { name: "Compare all options", price: "from one interface" },
   ];
 
   const handleLocationSelect = (
@@ -62,21 +66,30 @@ const RideComparisonForm = () => {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch("/api/compare-prices", {
-        method: "GET",
-        headers: {
-          "pickup-lat": pickupLocation.coordinates.latitude.toString(),
-          "pickup-lng": pickupLocation.coordinates.longitude?.toString() || "",
-          "dropoff-lat": dropoffLocation.coordinates.latitude.toString(),
-          "dropoff-lng":
-            dropoffLocation.coordinates.longitude?.toString() || "",
-        },
-      });
+    const riders = ["ola", "uber", "rapido", "local"];
+    const results: any[] = []; // Store results for all riders
 
-      if (!response.ok) throw new Error("Failed to fetch prices");
-      const data = await response.json();
-      console.log(data);
+    try {
+      // Fetch all rider prices in parallel
+      const promises = riders.map((rider) =>
+        fetch(
+          `https://ridekaro-backend-api.onrender.com/api/v1/getprice?start=${pickupLocation.coordinates.latitude},${pickupLocation.coordinates.longitude}&end=${dropoffLocation.coordinates.latitude},${dropoffLocation.coordinates.longitude}&rider=${rider}`
+        )
+      );
+
+      const responses = await Promise.all(promises);
+
+      // Parse JSON responses
+      for (let i = 0; i < responses.length; i++) {
+        const response = responses[i];
+        if (!response.ok) {
+          throw new Error(`Failed to fetch prices for ${riders[i]}`);
+        }
+        const riderData = await response.json();
+        results.push({ ...riderData, rider: riders[i] }); // Include rider name
+      }
+
+      setData(results); // Set all rider data
     } catch (err) {
       console.error("Error comparing prices:", err);
       setError("Failed to compare prices. Please try again.");
@@ -93,8 +106,8 @@ const RideComparisonForm = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-4xl h-auto min-h-[350px] p-6 rounded-lg backdrop-blur-sm shadow-lg flex justify-around bg-white/90">
-      <div className="space-y-6 w-1/2">
+    <div className="w-full max-w-4xl h-auto min-h-[350px] p-6 rounded-lg backdrop-blur-sm shadow-lg flex flex-row bg-white/90">
+      <div className="space-y-6 w-full">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">
           Compare Rides in Your City
         </h2>
@@ -105,13 +118,14 @@ const RideComparisonForm = () => {
             <div className="absolute left-3 top-1/2 -translate-y-1/2 transition-transform group-focus-within:scale-110">
               <MapPin className="w-5 h-5 text-green-500" />
             </div>
-            <SearchBox
-              accessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ""}
-              options={{ country: ["IN"] }}
-              onRetrieve={(result) => handleLocationSelect(result, "pickup")}
-              placeholder="Enter pickup location"
-              className="w-full pl-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            <div className="w-full pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+              <SearchBox
+                accessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ""}
+                options={{ country: "IN" }}
+                onRetrieve={(result) => handleLocationSelect(result, "pickup")}
+                placeholder="Enter pickup location"
+              />
+            </div>
           </div>
 
           {/* Dropoff Location */}
@@ -119,13 +133,14 @@ const RideComparisonForm = () => {
             <div className="absolute left-3 top-1/2 -translate-y-1/2 transition-transform group-focus-within:scale-110">
               <MapPin className="w-5 h-5 text-red-500" />
             </div>
-            <SearchBox
-              accessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ""}
-              options={{ country: ["IN"] }}
-              onRetrieve={(result: any) =>
-                handleLocationSelect(result, "dropoff")
-              }
-            />
+            <div className="w-full pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+              <SearchBox
+                accessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ""}
+                options={{ country: "IN" }}
+                onRetrieve={(result) => handleLocationSelect(result, "dropoff")}
+                placeholder="Enter dropoff location"
+              />
+            </div>
           </div>
         </div>
 
@@ -158,6 +173,19 @@ const RideComparisonForm = () => {
         >
           {isLoading ? "Comparing Prices..." : "Compare Prices"}
         </button>
+
+        {/* Render Rider Boxes */}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          {data.map((riderData) => (
+            <RideComparisonResults
+              key={riderData.rider}
+              success={riderData.success}
+              distance={riderData.distance}
+              price={riderData.price}
+              rider={riderData.rider}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Vehicle Carousel */}
